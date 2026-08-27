@@ -1,23 +1,12 @@
 import os
-import urllib.request
 from PIL import Image, ImageDraw, ImageFont
 import arabic_reshaper
 from bidi.algorithm import get_display
 
-# --- تحميل الخط العربي تلقائياً ---
-FONT_URL = "https://github.com/google/fonts/raw/main/ofl/tajawal/Tajawal-Bold.ttf"
-FONT_PATH = "Tajawal-Bold.ttf"
+# --- مسار الخط العربي المحلي (El Messiri) ---
+FONT_PATH = "font.ttf"
 
-if not os.path.exists(FONT_PATH):
-    print("تنزيل الخط...")
-    try:
-        urllib.request.urlretrieve(FONT_URL, FONT_PATH)
-    except Exception as e:
-        print(f"خطأ في تنزيل الخط: {e}")
-        # إذا فشل التنزيل، نحاول استخدام خط نظام احتياطي، لكنه لن يكون Tajawal
-        FONT_PATH = "DejaVuSans.ttf" 
-
-# --- دالة تصحيح النص العربي (الخطوة الأهم) ---
+# --- دالة تصحيح النص العربي ---
 def process_text(text):
     """
     تقوم بتشكيل النص العربي ثم عكس ترتيب الأحرف ليعرض من اليمين إلى اليسار.
@@ -34,7 +23,6 @@ def main():
         os.makedirs(output_dir)
 
     # 1. فتح ملف الأسماء
-    # تأكد من أن ملف الأسماء لديك اسمه 'names.txt'
     with open("names.txt", "r", encoding="utf-8") as f:
         names = [line.strip() for line in f if line.strip()]
 
@@ -42,13 +30,15 @@ def main():
         print("ملف names.txt فارغ!")
         return
 
-    # 2. تحديد نوع الخط وحجمه
-    # حجم الخط 55 مناسب، إذا أردته أصغر قم بتقليل الرقم (مثلا 45)
-    font = ImageFont.truetype(FONT_PATH, 55)
+    # 2. تحميل الخط المحلي font.ttf
+    try:
+        font = ImageFont.truetype(FONT_PATH, 55)
+    except OSError:
+        print(f"خطأ: لم يتم العثور على ملف الخط باسم {FONT_PATH} في المجلد!")
+        return
 
     # 3. معالجة كل اسم وتوليد الشهادة له
     for idx, name in enumerate(names, start=1):
-        # فتح القالب (تأكد أن اسمه template.png)
         try:
             image = Image.open("template.png").convert("RGB")
         except FileNotFoundError:
@@ -64,12 +54,11 @@ def main():
         bbox = draw.textbbox((0, 0), processed_name, font=font)
         text_w = bbox[2] - bbox[0]
 
-        # ج. التوسيط الأفقي ومكان الارتفاع (الارتفاع معدل ليناسب القالب)
+        # ج. التوسيط الأفقي ومكان الارتفاع
         x = (image.width - text_w) / 2
-        y = image.height * 0.44  # تحكم في مكان الارتفاع من هنا (0.0 لأعلى و 1.0 لأسفل)
+        y = image.height * 0.44  
 
-        # د. كتابة الاسم على الصورة بلون داكن
-        # اللون (25, 30, 45) هو لون أسود داكن مشابه للخطوط الأصلية
+        # د. كتابة الاسم على الصورة
         draw.text((x, y), processed_name, fill=(25, 30, 45), font=font)
 
         # هـ. تنظيف الاسم لاستخدامه كاسم للملف
