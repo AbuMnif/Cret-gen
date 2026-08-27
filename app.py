@@ -4,7 +4,7 @@ import arabic_reshaper
 from bidi.algorithm import get_display
 
 # --- مسار الخط العربي المحلي (El Messiri) ---
-FONT_PATH = "font.ttf"
+FONT_PATH = "Font.ttf"
 
 # --- دالة تصحيح النص العربي ---
 def process_text(text):
@@ -23,14 +23,18 @@ def main():
         os.makedirs(output_dir)
 
     # 1. فتح ملف الأسماء
-    with open("names.txt", "r", encoding="utf-8") as f:
-        names = [line.strip() for line in f if line.strip()]
+    try:
+        with open("names.txt", "r", encoding="utf-8") as f:
+            names = [line.strip() for line in f if line.strip()]
+    except FileNotFoundError:
+        print("خطأ: لم يتم العثور على ملف names.txt!")
+        return
 
     if not names:
         print("ملف names.txt فارغ!")
         return
 
-    # 2. تحميل الخط المحلي font.ttf
+    # 2. تحميل الخط المحلي Font.ttf
     try:
         font = ImageFont.truetype(FONT_PATH, 55)
     except OSError:
